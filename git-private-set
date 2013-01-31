@@ -1,0 +1,5 @@
+#!/bin/bash
+
+DEFAULT_ID='junk'
+DEFAULT_TSFMT='%Y/%m/%d/%H/'
+

@@ -1,0 +1,148 @@
+#!/bin/bash
+
+# KISS!
+# - Want multiple privates!
+# - Want to make it easy to private-push all configured SRC/DST pairs (only when needed!)
+
+# Option parsing:
+# TODO: my option parsing sucks!
+# TODO: recognize --id=ID, -iID, -i=ID(?)
+# TODO: recognize -fiID
+
+# Configuration?
+# TODO: when SRC is given, shall DST be found in push configs?
+# TODO: add branch.BRANCH.private.ID.dest(?)
+# TODO: Add option to override default no-force setting. (per ID only!)
+
+# UX:-)
+# TODO: Add git-private-set [--remote REMOTE] [--path PATH] [--tsfmt TSFMT] [--id ID] - easy!
+# TODO: Add git-private-add-push [--id ID] SRC [DST] - easy!
+# ???
+# TODO: do not push branch if no changes were made from last push to same DST :-/ - bit more tricky! Keep in config? :-/ Does not seem the best option - it is not configuration, it is property of remote repo!
+# TODO: Add private tags? (Use them to annotate branches?)
+# TODO: Is there a short option to fetch remote defined by URL?
+# TODO: Is there an easy way to fetch all remotes for all IDs?
+
+DEFAULT_ID='junk'
+DEFAULT_TSFMT='%Y/%m/%d/%H/'
+
+usage() {
+  echo "Usage: git-private-push [-i|--id ID] [-f|--force] [-F|--no-force] SRC [DST]"
+}
+
+helpme() {
+  cat <<END
+git-private-push - push to a "hidden" remote branch.
+
+$(usage)
+
+ARGUMENTS
+
+  SRC - source ref (like 'remote/branch').
+  DST - final path element (like 'remote/branch'). When empty SRC is used.
+
+OPTIONS
+
+  --id ID - identifier allowing more private configs: junk, wip, archive each
+            with own repo, tsfmt, path and default push pairs.
+            Default is '$DEFAULT_ID'.
+
+CONFIGURATION
+
+private.tsfmt       - default timestamp format for all IDs.[1]
+                      Default is '$DEFAULT_TSFMT'.
+private.remote      - default remote for all IDs. Default is '\$ID'.
+
+private.\$ID.remote - remote used for private brnaches. 'private.remote' is
+                      used when undefined. This can be a remote name or URL.
+private.\$ID.path   - path on the remote.[1] Default is '\$ID/'.
+private.\$ID.tsfmt  - timestamp format.[1] 'private.tsfmt' is used when
+                      undefined.
+private.\$ID.push   - define SRC [DST] used when no arguments are given on
+                      command line. Multiple of these can be defined as:
+
+                          git config private.\$ID.push SRC [DST]
+
+[1] Use a trailing slash in 'path' and 'tsfmt' to prevent joining with next path
+element.
+
+NOTES
+
+Remember: These branches are hidden and offer no privacy at all!
+
+This operates as if following command was given on command line:
+
+    git push <REMOTE> <SRC>:refs/<PATH>\$(date <TIMESTAMP>)<DST>
+
+Junk is not fetched by default, and even when fetched, it not displayed by
+tools unless '--all' switch is used.
+
+To fetch them add following config option:
+
+    git config --add remote.\$REMOTE.fetch "+refs/\$ID/*:refs/\$ID/\$REMOTE"
+
+Also gitk displays these refs in a nice grayish color :-)
+
+END
+}
+
+private_push() {
+  local src=$1 dst=${2:-"$1"}
+  [[ -n $src ]] || { echo "ERROR: SRC not given!">&2; usage>&2; return 1; }
+  git push $PRIVATE_REMOTE "$src:refs/${PRIVATE_PATH}$(date "$PRIVATE_TSFMT")${dst}"
+}
+
+FORCE="" # Never force by default!
+
+while [[ -n "$*" ]]; do
+  case "$1" in
+    --help|-h)
+      helpme
+      exit 0
+      ;;
+    -f|--force)
+      FORCE="-f"
+      ;;
+    -F|--no-force)
+      FORCE=""
+      ;;
+    --id|-i)
+      shift
+      PRIVATE_ID=$1
+      shift
+      ;;
+    --)
+      shift
+      break
+      ;;
+    -*)
+      echo "Unknown option '$1'">&2
+      usage >&2
+      exit 1
+      ;;
+    *)
+      break
+      ;;
+  esac
+done
+
+PRIVATE_ID=${PRIVATE_ID:-"$DEFAULT_ID"}
+
+PRIVATE_REMOTE="$(git config --get private.$PRIVATE_ID.remote || git config --get private.remote)"
+PRIVATE_REMOTE="${PRIVATE_REMOTE:-"$PRIVATE_ID"}"
+
+PRIVATE_PATH="$(git config --get private.$PRIVATE_ID.path)"
+PRIVATE_PATH="${PRIVATE_PATH:-"$PRIVATE_ID/"}"
+
+PRIVATE_TSFMT="$(git config --get private.$PRIVATE_ID.tsfmt || git config --get private.tsfmt)"
+PRIVATE_TSFMT="${PRIVATE_TSFMT:-"$DEFAULT_TSFMT"}"
+[[ "$PRIVATE_TSFMT" == +* ]] || PRIVATE_TSFMT="+$PRIVATE_TSFMT"
+
+if [[ -n $* ]]; then
+  private_push "$@"
+else
+  git config --get-all private.$PRIVATE_ID.push | while read; do
+    private_push $REPLY
+  done
+fi
+
