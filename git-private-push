@@ -6,8 +6,8 @@
 
 # Option parsing:
 # TODO: my option parsing sucks!
-# TODO: recognize --id=ID, -iID, -i=ID(?)
-# TODO: recognize -fiID
+# recognize -iID, -i=ID ?
+# recognize -fiID ?
 
 # Configuration?
 # TODO: when SRC is given, shall DST be found in push configs?
@@ -106,10 +106,12 @@ while [[ -n "$*" ]]; do
     -F|--no-force)
       FORCE=""
       ;;
+    --id=)
+      PRIVATE_ID=${1#*=}
+      ;;
     --id|-i)
       shift
       PRIVATE_ID=$1
-      shift
       ;;
     --)
       shift
@@ -124,6 +126,7 @@ while [[ -n "$*" ]]; do
       break
       ;;
   esac
+  shift
 done
 
 PRIVATE_ID=${PRIVATE_ID:-"$DEFAULT_ID"}
