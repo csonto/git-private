@@ -1,0 +1,68 @@
+# git-private-push - create a hidden branch in remote repository
+
+Hidden branches are useful to let other know the branch may get rebased at any
+time and to avoid cluttering history.
+
+These refs offers no security or privacy. They are just not displayed or
+fetched by default.
+
+`gitk` will display these refs in a nice gray color.
+
+See `--help` option for usage details.
+
+## Configuration
+
+- `private.$ID.*` - configuration for particular private space
+- `private.*` - default options
+
+It may be useful to define global defaults:
+
+    git config --global private.tsfmt "%Y/%m/%d/%H%M/"
+
+The configuration options are:
+
+- `*.tsfmt`  - timestamp format. This defaults to `%Y/%m/%d/%H/`.
+- `*.path`   - path within remote. This defaults to `$ID/`.
+- `*.remote` - remote where private refs are kept. Defaults to `$ID`.
+- `*.push`   - `SRC [DST]` couple to use when not given on command line. There
+  may be multiple of them.
+- `*.force`  - if not empty force push if remote ref already exists. This may
+  be overridden on command line by `--no-force` option.
+
+For example to define origin for "WIP" space one can use:
+
+    git config private.wip.remote origin
+
+Add a default push "pair" (using default destination):
+
+    git config --add private.wip.push master
+
+In the .git/config it looks like:
+
+    [private "wip"]
+    remote = origin
+    path = wip/nb1/
+    tsfmt = 0/ # Use constant. Default would be used if empty.
+
+## Usage
+
+Push to default "junk" space:
+
+    git private-push master
+
+Push to wip space:
+
+    git private-push --id wip master
+
+## Fetching
+
+Add fetch config options to private "remote":
+
+    git config --add remote.$remote.fetch "+refs/$path/*:refs/$path/$remote/*"
+
+e.g. for `wip` space at `master` remote:
+
+    git config --add remote.master.fetch "+refs/wip/*:refs/wip/master/*"
+
+Or use `git-private-add-fetch [ID]`.
+

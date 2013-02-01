@@ -1,0 +1,38 @@
+#!/bin/bash
+
+DEFAULT_ID='junk'
+
+usage() {
+  echo "Usage: git-private-add-fetch [ID]"
+}
+
+helpme() {
+  cat <<END
+git-private-add-fetch - add fetch option for a "hidden" remote refs.
+
+$(usage)
+
+END
+}
+
+private_conf() { git config --get "private.$PRIVATE_ID.$1" || git config --get "private.$1"; }
+
+add_fetch() {
+  local PRIVATE_ID=$1
+  local path="$(private_conf path)"
+  path=${path:-"$PRIVATE_ID/"}
+  local remote="$(private_conf remote)"
+  remote=${remote:-"$PRIVATE_ID"}
+  git config --add remote.$remote.fetch "+refs/$path*:refs/$path$remote/*"
+}
+
+if [[ $1 == --help || $1 == -h ]]; then
+  helpme
+  exit 0
+fi
+
+while [[ -n $* ]]; do
+  add_fetch $1
+  shift
+done
+
