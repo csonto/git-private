@@ -31,8 +31,13 @@ if [[ $1 == --help || $1 == -h ]]; then
   exit 0
 fi
 
-while [[ -n $* ]]; do
-  add_fetch $1
-  shift
-done
-
+if [[ -n "$*" ]]; then
+  while [[ -n "$*" ]]; do
+    if [[ -n "$1" ]]; then
+      add_fetch "$1"
+    fi
+    shift
+  done
+else
+  add_fetch "$DEFAULT_ID"
+fi
