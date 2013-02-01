@@ -58,6 +58,8 @@ private.\$ID.remote - remote used for private brnaches. 'private.remote' is
 private.\$ID.path   - path on the remote.[1] Default is '\$ID/'.
 private.\$ID.tsfmt  - timestamp format.[1] 'private.tsfmt' is used when
                       undefined.
+private.\$ID.force  - force push if the remote ref already exists. Default is
+                      empty.
 private.\$ID.push   - define SRC [DST] used when no arguments are given on
                       command line. Multiple of these can be defined as:
 
@@ -89,8 +91,10 @@ END
 private_push() {
   local src=$1 dst=${2:-"$1"}
   [[ -n $src ]] || { echo "ERROR: SRC not given!">&2; usage>&2; return 1; }
-  git push $PRIVATE_REMOTE "$src:refs/${PRIVATE_PATH}$(date "$PRIVATE_TSFMT")${dst}"
+  git push $GIT_PUSH_OPTS $PRIVATE_REMOTE "$src:refs/${PRIVATE_PATH}$(date "$PRIVATE_TSFMT")${dst}"
 }
+
+private_conf() { git config --get "private.$PRIVATE_ID.$1" || git config --get "private.$1"; }
 
 FORCE="" # Never force by default!
 
@@ -101,10 +105,10 @@ while [[ -n "$*" ]]; do
       exit 0
       ;;
     -f|--force)
-      FORCE="-f"
+      FORCE=1
       ;;
     -F|--no-force)
-      FORCE=""
+      FORCE=0
       ;;
     --id=)
       PRIVATE_ID=${1#*=}
@@ -131,15 +135,23 @@ done
 
 PRIVATE_ID=${PRIVATE_ID:-"$DEFAULT_ID"}
 
-PRIVATE_REMOTE="$(git config --get private.$PRIVATE_ID.remote || git config --get private.remote)"
+PRIVATE_REMOTE="$(private_conf remote)"
 PRIVATE_REMOTE="${PRIVATE_REMOTE:-"$PRIVATE_ID"}"
 
-PRIVATE_PATH="$(git config --get private.$PRIVATE_ID.path)"
+PRIVATE_PATH="$(private_conf path)"
 PRIVATE_PATH="${PRIVATE_PATH:-"$PRIVATE_ID/"}"
 
-PRIVATE_TSFMT="$(git config --get private.$PRIVATE_ID.tsfmt || git config --get private.tsfmt)"
+PRIVATE_TSFMT="$(private_conf tsfmt)"
 PRIVATE_TSFMT="${PRIVATE_TSFMT:-"$DEFAULT_TSFMT"}"
 [[ "$PRIVATE_TSFMT" == +* ]] || PRIVATE_TSFMT="+$PRIVATE_TSFMT"
+
+GIT_PUSH_OPTS=""
+
+if [[ -n "$FORCE" ]]; then
+  [[ "$FORCE" != 0 ]] && GIT_PUSH_OPTS="$GIT_PUSH_OPTS -f"
+else
+  [[ -n "$(private_conf force)" ]] && GIT_PUSH_OPTS="$GIT_PUSH_OPTS -f"
+fi
 
 if [[ -n $* ]]; then
   private_push "$@"
