@@ -25,6 +25,7 @@
 
 DEFAULT_ID='junk'
 DEFAULT_TSFMT='%Y/%m/%d/%H/'
+DEFAULT_FMT=''
 
 usage() {
   echo "Usage: git-private-push [-i|--id ID] [-f|--force] [-F|--no-force] SRC [DST]"
@@ -45,14 +46,21 @@ OPTIONS
 
   --id ID - identifier allowing more private configs: junk, wip, archive each
             with own repo, tsfmt, path and default push pairs.
-            Default is '$DEFAULT_ID'.
+            Default is taken from 'private.id' or '$DEFAULT_ID'.
 
 CONFIGURATION
 
+private.id          - default ID. Default is '$DEFAULT_ID'.
+private.fmt         - default path format. Strings '\$TS' and '\SDST' are
+                      replaced with corresponding variables.
+                      NOTE: '\$DST' in '\$TS' is replaced but '\$TS' in
+                      '\$DST' is not.
+                      Default: '\$TS\$DST'.
 private.tsfmt       - default timestamp format for all IDs.[1]
                       Default is '$DEFAULT_TSFMT'.
 private.remote      - default remote for all IDs. Default is '\$ID'.
 
+private.\$ID.fmt    - path format.
 private.\$ID.remote - remote used for private brnaches. 'private.remote' is
                       used when undefined. This can be a remote name or URL.
 private.\$ID.path   - path on the remote.[1] Default is '\$ID/'.
@@ -65,8 +73,8 @@ private.\$ID.push   - define SRC [DST] used when no arguments are given on
 
                           git config private.\$ID.push SRC [DST]
 
-[1] Use a trailing slash in 'path' and 'tsfmt' to prevent joining with next path
-element.
+[1]: Use a trailing slash in 'path' and 'tsfmt' to prevent joining with next
+path element.
 
 NOTES
 
@@ -89,9 +97,16 @@ END
 }
 
 private_push() {
-  local src=$1 dst=${2:-"$1"}
+  local src=$1 dst=${2:-"$1"} ts="$(date "$PRIVATE_TSFMT")"
   [[ -n $src ]] || { echo "ERROR: SRC not given!">&2; usage>&2; return 1; }
-  git push $GIT_PUSH_OPTS $PRIVATE_REMOTE "$src:refs/${PRIVATE_PATH}$(date "$PRIVATE_TSFMT")${dst}"
+  if [[ -n $PRIVATE_FMT ]]; then
+    local formatted="$PRIVATE_FMT"
+    formatted="${formatted//\$TS/$ts}"
+    formatted="${formatted//\$DST/$dst}"
+  else
+    local formatted="$ts$dst"
+  fi
+  git push $GIT_PUSH_OPTS $PRIVATE_REMOTE "$src:refs/${PRIVATE_PATH}${formatted}"
 }
 
 private_conf() { git config --get "private.$PRIVATE_ID.$1" || git config --get "private.$1"; }
@@ -133,7 +148,8 @@ while [[ -n "$*" ]]; do
   shift
 done
 
-PRIVATE_ID=${PRIVATE_ID:-"$DEFAULT_ID"}
+_id=$(git config --get "private.id")
+PRIVATE_ID="${PRIVATE_ID:-"${_id:-"$DEFAULT_ID"}"}"
 
 PRIVATE_REMOTE="$(private_conf remote)"
 PRIVATE_REMOTE="${PRIVATE_REMOTE:-"$PRIVATE_ID"}"
@@ -144,6 +160,9 @@ PRIVATE_PATH="${PRIVATE_PATH:-"$PRIVATE_ID/"}"
 PRIVATE_TSFMT="$(private_conf tsfmt)"
 PRIVATE_TSFMT="${PRIVATE_TSFMT:-"$DEFAULT_TSFMT"}"
 [[ "$PRIVATE_TSFMT" == +* ]] || PRIVATE_TSFMT="+$PRIVATE_TSFMT"
+
+PRIVATE_FMT="$(private_conf fmt)"
+PRIVATE_FMT="${PRIVATE_FMT:-"$DEFAULT_FMT"}"
 
 GIT_PUSH_OPTS=""
 
