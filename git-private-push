@@ -182,8 +182,9 @@ fi
 if [[ -n $* ]]; then
   private_push "$@"
 else
+  answ=0
   git config --get-all private.$PRIVATE_ID.push | while read; do
-    private_push $REPLY
+    private_push $REPLY || answ=1
   done
+  exit $answ
 fi
-
