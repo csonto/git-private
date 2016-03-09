@@ -23,8 +23,9 @@ The configuration options are:
 
 - `private.id` - default ID.
 - `*.fmt`    - path format. Defaults to `$TS$DST`.
-  Strings `$TS` and `SDST` are replaced with corresponding values.
-  `$DST` in `$TS` is replaced but `$TS` in `$DST` is not.
+  Strings `$TS`, `$USER`, `$EMAIL` and `SDST` are replaced with corresponding
+  values. These strings are replaced in `$TS` but not in any other of the
+  values.
 - `*.tsfmt`  - timestamp format. This defaults to `%Y/%m/%d/%H/`.
 - `*.path`   - path within remote. This defaults to `$ID/`.
 - `*.remote` - remote where private refs are kept. Defaults to `$ID`.
