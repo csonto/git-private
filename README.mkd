@@ -71,3 +71,38 @@ e.g. for `wip` space at `master` remote:
 
 Or use `git-private-add-fetch [ID]`.
 
+## Example
+
+My .git/config for git-private looks like this:
+
+    [core]
+    	repositoryformatversion = 0
+    	filemode = true
+    	bare = false
+    	logallrefupdates = true
+    [remote "origin"]
+    	url = git@github.com:csonto/git-private.git
+    	fetch = +refs/heads/*:refs/remotes/origin/*
+    	fetch = +refs/wip/*:refs/wip/origin/*
+    	fetch = +refs/backup/*:refs/backup/*
+        fetch = +refs/*:refs/all/origin/*
+    [branch "master"]
+    	remote = origin
+    	merge = refs/heads/master
+    [private]
+        # by default pushing to history tracking wip private:
+    	id = wip
+    [private "backup"]
+        # anything will do, this is ignored:
+    	tsfmt = "-"
+        # ignoring TS, this is not tracking history, only latest change is pushed:
+    	fmt = "$EMAIL/$DST"
+        # changes has to be forced:
+    	force = 1
+        # branches to backup with git backup:
+    	push = master
+        push = gh-pages
+    [alias]
+        # TODO: move to ~/.gitconfig:
+    	backup = private-push --id backup
+
