@@ -28,7 +28,7 @@ DEFAULT_TSFMT='%Y/%m/%d/%H/'
 DEFAULT_FMT=''
 
 usage() {
-  echo "Usage: git-private-push [-i|--id ID] [-f|--force] [-F|--no-force] SRC [DST]"
+  echo "Usage: git-private-push [-i|--id ID] [-f|--force] [-F|--no-force] [SRC [DST]]"
 }
 
 helpme() {
