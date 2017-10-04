@@ -40,7 +40,7 @@ fetched unless asked for.
 
 ### How to install
 
-1. Get the the `git-private-push` and `git-private-add-fetch` scripts, by either:
+1. Get the `git-private-push` and `git-private-add-fetch` scripts, by either:
     * Cloning this repository:  
       `git clone https://github.com/csonto/git-private.git`
     * Downloading [the zip archive](https://github.com/csonto/git-private/archive/master.zip)
