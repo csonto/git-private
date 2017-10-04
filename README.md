@@ -1,13 +1,15 @@
-# git-private-push - create a hidden branch in remote repository
+# git-private-push
 
-Use `git private-push` to backup your work in progress branches, to keep
+Create a hidden branch in remote repositories.
+
+Use `git private-push` to backup your work-in-progress branches, to keep
 history when frequently rebasing a branch without cluttering everyone's view,
 or to let others know the branch may get rebased at any time.
 
 `gitk` will display these refs in a nice gray color.
 
-**WARNING:** Hidden branches offers absolutely no security or privacy. They are
-just neither displayed nor fetched by default.
+**WARNING:** Hidden branches offer absolutely no security or privacy.
+They are just neither displayed nor fetched by default.
 
 **Features**
 
@@ -23,49 +25,64 @@ just neither displayed nor fetched by default.
   Sorry. `git private-push --help` will not work until a man page is added.
   Use `git-private-push --help` instead.
 
-**Requirements**
-
-* git
-* bash
-
-**Installation**
-
-Add `git-private-push` (and optionally `git-private-add-fetch`) to a directory
-in your `$PATH`, e.g. `/usr/local/bin/`.
-
 **Internals**
 
 Git by default fetches from `refs/heads/`, `refs/tags/`. Pushing to a
 non-default subdirectory in `refs` will create a "hidden" branch which is not
 fetched unless asked for.
 
+## Installation
+
+### Requirements
+
+* git
+* bash
+
+### How to install
+
+1. Get the `git-private-push` and `git-private-add-fetch` scripts, by either:
+    * Cloning this repository:  
+      `git clone https://github.com/csonto/git-private.git`
+    * Downloading [the zip archive](https://github.com/csonto/git-private/archive/master.zip)
+      and extracting it locally:  
+      `wget https://github.com/csonto/git-private/archive/master.zip && unzip master.zip`
+2. Make the script callable form anywhere on your system, by either:
+    * Adding the script files to a directory in your `$PATH`, e.g.:  
+      `cp <path/to/git-private>/git-private-* /usr/local/bin/`
+    * Creating a link to the script files from such a directory, e.g.:  
+      `ln -s <path/to/git-private>/git-private-push /usr/local/bin/git-private-push`
+    * Adding the directory where you downloaded the files to your `$PATH`, e.g.:  
+      `echo 'export PATH="<path/to/git-private>:$PATH"' >> ~/.bashrc && source ~/.bashrc`
+
 ## Usage
+
+### Pushing
 
 The `git private-push` is used as follows:
 
     git private-push [--id ID] [--force|--no-force] [BRANCH [DESTINATION]]
 
-Push to default "junk" space:
+Push to the default private space, named "junk":
 
     git private-push master
 
-Push a ref from remote to wip space with custom destination:
+Push a ref from remote to a private space named "wip", with custom destination:
 
     git private-push --id wip remotes/local/master local
 
-## Fetching
+### Fetching
 
 Add fetch config options to private "remote":
 
     git config --add remote.$remote.fetch "+refs/$path/*:refs/$path/$remote/*"
 
-e.g. for `wip` space at `origin` remote:
+e.g. for the private space named `wip` at the `origin` remote:
 
     git config --add remote.origin.fetch "+refs/wip/*:refs/wip/origin/*"
 
 Or use `git-private-add-fetch [ID]`.
 
-## Examples
+### Concrete examples
 
 By default `.git/config` contains something like this:
 
@@ -74,21 +91,21 @@ By default `.git/config` contains something like this:
         # This is the default:
         fetch = +refs/heads/*:refs/remotes/origin/*
 
-The directory structure is up to you, in general you will likely want to follow
+The directory structure is up to you. In general you will likely want to follow
 up git's `refs/$PATH/$REMOTE` pattern. To fetch all refs from the remote add a
 line like this:
 
         fetch = +refs/*:refs/all/origin/*
 
-To fetch a subdir from the remote add a line like this:
+To fetch a subdirectory from the remote, add a line like this:
 
         fetch = +refs/wip/csonto/*:refs/wip/csonto/*
 
-Common options should go to `~/.gitconfig`, project specific to `$PROJECT/.git/config`.
+Common options should go to `~/.gitconfig`, and project-specific options to `$PROJECT/.git/config`.
 
 Let's see something more useful...
 
-### Backup
+#### Backup
 
 I want a copy of my work stored on the server. I do not require history, single
 copy is good enough for me.
@@ -164,7 +181,7 @@ To fetch only yours:
 
 Well, that's it. Except, backup without history, is not a real backup. Let's add history...
 
-### Backup with History
+#### Backup with history
 
 I am working on a feature branch and I need to rebase frequently.
 
