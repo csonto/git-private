@@ -51,10 +51,38 @@ fetched unless asked for.
       `cp <path/to/git-private>/git-private-* /usr/local/bin/`
     * Creating a link to the script files from such a directory, e.g.:  
       `ln -s <path/to/git-private>/git-private-push /usr/local/bin/git-private-push`
-    * Adding the directory where you downloaded the files to your `$PATH`, e.g.:  
+    * Adding the directory where you downloaded the files to your `$PATH`,
+      e.g.:  
       `echo 'export PATH="<path/to/git-private>:$PATH"' >> ~/.bashrc && source ~/.bashrc`
 
 ## Usage
+
+### Configure private branches
+
+First, basic configuration of private branches.
+
+By default "junk" space is used. This default can be changed by changing
+`private.id` config option.
+
+By default each private space uses remote with the same name. For the default
+"junk" space you either need to create the remote:
+
+    git remote add junk $URL
+
+Or change remote option like this:
+
+    git config private.junk.remote origin
+
+You can also change the default remote for git working directory:
+
+    git config private.remote origin
+
+Or change global default:
+
+    git config --global private.remote origin
+
+See more bellow at [Configuration](#configuration).
+And have a look at [Examples](#concrete-examples).
 
 ### Pushing
 
@@ -101,7 +129,8 @@ To fetch a subdirectory from the remote, add a line like this:
 
         fetch = +refs/wip/csonto/*:refs/wip/csonto/*
 
-Common options should go to `~/.gitconfig`, and project-specific options to `$PROJECT/.git/config`.
+Common options should go to `~/.gitconfig`, and project-specific options to
+`$PROJECT/.git/config`.
 
 Let's see something more useful...
 
@@ -113,7 +142,7 @@ copy is good enough for me.
     git wip
     git wip BRANCH
 
-Eventually I might want to push uncommited changes:
+Eventually I might want to push uncommitted changes:
 
     git stash
     git wip "stash@{0}" stashed
@@ -133,7 +162,8 @@ If you want this to work for all your git repos, add a common configuration to
     [alias]
         wip = private-push --id wip
 
-Add a project specific part - remote, list of branches - to project's `.git/config`.
+Add a project specific part - remote, list of branches - to project's
+`.git/config`.
 
 For each branch to store run:
 
@@ -146,7 +176,8 @@ To use different remote for this project add:
 The configuration will look like this (without comments):
 
     [private "wip"]
-        # you can use your own git server for backups:
+        # by default remote with same name (thus "wip") will be used.
+        # You can use your own git server for backups:
         #remote = private
 
         # refs to backup with git wip:
@@ -179,7 +210,8 @@ To fetch only yours:
 
     git config --add remote.origin.fetch "fetch = +refs/wip/user@example.com/*:refs/wip/*"
 
-Well, that's it. Except, backup without history, is not a real backup. Let's add history...
+Well, that's it. Except, backup without history, is not a real backup. Let's
+add history...
 
 #### Backup with history
 
@@ -245,7 +277,7 @@ Add a default push "pair" (using different destination):
 
     git config --add private.wip.push "stash@{0} stashed"
 
-In the .git/config it looks like:
+In the `.git/config` it looks like:
 
     [private "wip"]
     remote = origin
